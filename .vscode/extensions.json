@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "ms-python.python",
+    "golang.go",
+    "jakebecker.elixir-ls",
+    "eamodio.gitlens"
+  ]
+}

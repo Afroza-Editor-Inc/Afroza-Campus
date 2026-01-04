@@ -1,0 +1,7 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.venv": true
+  },
+  "editor.formatOnSave": true
+}

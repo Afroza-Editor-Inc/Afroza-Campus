@@ -1,0 +1,22 @@
+# GraphQL schema placeholder
+
+type Post {
+  id: ID!
+  authorId: ID!
+  content: String!
+  mediaUrl: String
+  createdAt: String
+}
+
+type Query {
+  health: String!
+  feed(limit: Int): [Post]
+}
+
+type Mutation {
+  createPost(authorId: ID!, content: String!, mediaUrl: String): ID
+}
+
+type Subscription {
+  _empty: Boolean
+}
