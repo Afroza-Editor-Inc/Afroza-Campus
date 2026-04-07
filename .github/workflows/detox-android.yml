@@ -1,0 +1,31 @@
+name: Detox Android
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  detox-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies (mobile)
+        run: |
+          cd frontend/mobile
+          npm ci
+      - name: Build Android app and run Detox
+        run: |
+          cd frontend/mobile
+          npm run detox:build
+          npm run detox:test

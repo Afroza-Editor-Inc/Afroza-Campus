@@ -15,8 +15,9 @@ export default function LoginScreen(){
       } else {
         Alert.alert('Error', JSON.stringify(r));
       }
-    }catch(e){
-      Alert.alert('Error', e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      Alert.alert('Error', message);
     }
   }
 

@@ -3,6 +3,9 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# Expo
+.expo/
+
 # Python
 __pycache__/
 *.pyc

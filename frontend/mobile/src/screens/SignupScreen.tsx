@@ -12,8 +12,9 @@ export default function SignupScreen(){
       const r: any = await register(email,password,displayName);
       Alert.alert('Registered', JSON.stringify(r));
       // TODO: redirect to login
-    }catch(e){
-      Alert.alert('Error', e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      Alert.alert('Error', message);
     }
   }
 

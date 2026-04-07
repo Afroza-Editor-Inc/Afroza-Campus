@@ -1,0 +1,30 @@
+name: Playwright snapshots (web)
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  playwright-snap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: |
+          cd frontend/web
+          npm ci
+      - name: Start Next.js
+        run: |
+          cd frontend/web
+          npm run dev &
+          sleep 4
+      - name: Run Playwright tests
+        run: |
+          cd frontend/web
+          npx playwright test --project=chromium

@@ -1,0 +1,4 @@
+{
+  "setupFilesAfterEnv": ["./init.js"],
+  "testTimeout": 120000
+}

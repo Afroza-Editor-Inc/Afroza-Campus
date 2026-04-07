@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "test:snapshots": "playwright test"
   },
   "dependencies": {
     "next": "13.5.2",
@@ -14,6 +17,9 @@
     "@apollo/client": "^3.8.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@storybook/react": "^7.0.0",
+    "@storybook/addon-essentials": "^7.0.0",
+    "@playwright/test": "^1.40.0"
   }
 }
