@@ -1,21 +1,100 @@
 import React from 'react';
-import { View, Text, Switch, TouchableOpacity, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton, GlassCard, SectionTitle } from '../components/ui';
 import theme from '../theme';
 
-export default function SettingsScreen(){
+const sections = [
+  { title: 'Notifications push', value: true },
+  { title: 'Sécurité 2FA', value: false },
+  { title: 'Téléchargement auto médias', value: true },
+  { title: 'Mode créateur', value: true },
+];
+
+export default function SettingsScreen({ navigation }: any) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Paramètres</Text>
-      <View style={styles.row}><Text>Notifications</Text><Switch value={true} /></View>
-      <View style={styles.row}><Text>Sécurité (2FA)</Text><Switch value={false} /></View>
-      <TouchableOpacity style={styles.logout}><Text style={{color:'#fff'}}>Se déconnecter</Text></TouchableOpacity>
-    </View>
-  )
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Pressable style={styles.back} onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>‹</Text>
+          </Pressable>
+          <SectionTitle eyebrow="Préférences" title="Paramètres" />
+        </View>
+
+        <GlassCard style={styles.card}>
+          {sections.map((item) => (
+            <View key={item.title} style={styles.row}>
+              <View style={styles.rowText}>
+                <Text style={styles.rowTitle}>{item.title}</Text>
+                <Text style={styles.rowSubtitle}>Configuration mobile-first prête pour la prod.</Text>
+              </View>
+              <Switch value={item.value} trackColor={{ true: theme.colors.secondary, false: theme.colors.borderStrong }} />
+            </View>
+          ))}
+        </GlassCard>
+
+        <GlassCard style={styles.card}>
+          <Text style={styles.rowTitle}>Confidentialité & compte</Text>
+          <Text style={styles.link}>Gérer les appareils connectés</Text>
+          <Text style={styles.link}>Préférences de visibilité du profil</Text>
+          <Text style={styles.link}>Exporter les données</Text>
+        </GlassCard>
+
+        <AppButton label="Se déconnecter" variant="secondary" />
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {flex:1,padding:16,backgroundColor:theme.colors.background},
-  title: {fontSize:20,fontWeight:'700',marginBottom:16},
-  row: {flexDirection:'row',justifyContent:'space-between',paddingVertical:12,borderBottomWidth:1,borderBottomColor:'#eee'},
-  logout: {marginTop:24,backgroundColor:theme.colors.primary,padding:12,alignItems:'center',borderRadius:8}
+  safeArea: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    padding: theme.spacing.lg,
+    gap: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxxl,
+  },
+  header: {
+    gap: theme.spacing.md,
+  },
+  back: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backText: {
+    fontSize: 24,
+    color: theme.colors.text,
+  },
+  card: {
+    gap: theme.spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  rowText: {
+    flex: 1,
+    gap: 4,
+  },
+  rowTitle: {
+    ...theme.typography.title3,
+    fontSize: 16,
+  },
+  rowSubtitle: {
+    ...theme.typography.bodyMuted,
+  },
+  link: {
+    ...theme.typography.body,
+    color: theme.colors.primary,
+  },
 });

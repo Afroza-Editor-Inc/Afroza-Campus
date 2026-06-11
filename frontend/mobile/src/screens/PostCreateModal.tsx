@@ -1,155 +1,277 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, Text, TouchableOpacity, Image, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { AppButton } from '../components/ui';
 import theme from '../theme';
+import { hapticFeedback } from '../utils/haptics';
 
-export default function PostCreateModal() {
-  const navigation = useNavigation<any>();
-  const [text, setText] = useState('');
-  const slide = React.useRef(new Animated.Value(Dimensions.get('window').height)).current;
-  const backdrop = React.useRef(new Animated.Value(0)).current;
+type CreateMode = 'post' | 'story' | 'reel';
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(backdrop, { toValue: 0.6, duration: 220, useNativeDriver: true }),
-      Animated.timing(slide, { toValue: 0, duration: 320, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
-    ]).start();
-  }, []);
+type Tool = { key: string; label: string; icon: keyof typeof Ionicons.glyphMap };
 
-  const close = () => {
-    navigation.goBack();
-  };
+const MODE_CONFIG: Record<
+  CreateMode,
+  { title: string; subtitle: string; prompt: string; cta: string; icon: keyof typeof Ionicons.glyphMap; tools: Tool[] }
+> = {
+  post: {
+    title: 'Nouvelle publication',
+    subtitle: 'Partagez une idée, un événement ou une ressource',
+    prompt: 'Quoi de neuf sur le campus ?',
+    cta: 'Publier maintenant',
+    icon: 'create-outline',
+    tools: [
+      { key: 'image', label: 'Images', icon: 'images-outline' },
+      { key: 'video', label: 'Vidéos', icon: 'videocam-outline' },
+      { key: 'doc', label: 'Documents', icon: 'document-text-outline' },
+      { key: 'hashtag', label: 'Hashtags', icon: 'pricetag-outline' },
+      { key: 'mention', label: 'Mentions', icon: 'at-outline' },
+    ],
+  },
+  story: {
+    title: 'Nouvelle story',
+    subtitle: 'Contenu éphémère visible 24h',
+    prompt: 'Ajoutez un texte à votre story',
+    cta: 'Partager la story',
+    icon: 'aperture-outline',
+    tools: [
+      { key: 'photo', label: 'Photo', icon: 'camera-outline' },
+      { key: 'video', label: 'Vidéo', icon: 'videocam-outline' },
+      { key: 'text', label: 'Texte', icon: 'text-outline' },
+      { key: 'sticker', label: 'Stickers', icon: 'happy-outline' },
+      { key: 'mention', label: 'Mention', icon: 'at-outline' },
+      { key: 'location', label: 'Lieu', icon: 'location-outline' },
+    ],
+  },
+  reel: {
+    title: 'Nouveau reel',
+    subtitle: 'Vidéo courte et immersive',
+    prompt: 'Décrivez votre reel',
+    cta: 'Publier le reel',
+    icon: 'film-outline',
+    tools: [
+      { key: 'import', label: 'Importer', icon: 'cloud-upload-outline' },
+      { key: 'music', label: 'Musique', icon: 'musical-notes-outline' },
+      { key: 'text', label: 'Texte', icon: 'text-outline' },
+      { key: 'effects', label: 'Effets', icon: 'sparkles-outline' },
+      { key: 'filters', label: 'Filtres', icon: 'color-filter-outline' },
+      { key: 'cover', label: 'Miniature', icon: 'image-outline' },
+    ],
+  },
+};
 
-  const handlePublish = () => {
-    if (text.trim()) {
-      // TODO: Send post to backend
-      console.log('Publishing:', text);
-      close();
-    }
-  };
+export default function PostCreateModal({ navigation, route }: any) {
+  const mode: CreateMode = route?.params?.mode ?? 'post';
+  const config = MODE_CONFIG[mode] ?? MODE_CONFIG.post;
+  const [caption, setCaption] = useState('');
 
   return (
-    <View style={styles.root} pointerEvents="box-none">
-      <Animated.View style={[styles.backdrop, { opacity: backdrop }]} onTouchEnd={close} />
-      <Animated.View
-        style={[styles.container, { transform: [{ translateY: slide }] }]}
-        pointerEvents="auto"
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={close}>
-            <Text style={styles.closeIcon}>✕</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Créer une publication</Text>
-          <View style={styles.spacer} />
-        </View>
-
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          multiline
-          placeholder="Quoi de neuf sur le campus ?"
-          placeholderTextColor={theme.colors.muted}
-          style={styles.input}
-        />
-
-        <View style={styles.preview}>
-          <View style={styles.imagePlaceholder}>
-            <Text style={styles.imagePlaceholderText}>➕ Ajouter une image</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, !text.trim() && styles.buttonDisabled]}
-          onPress={handlePublish}
-          disabled={!text.trim()}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Fermer"
+          hitSlop={theme.accessibility.hitSlop}
+          onPress={() => navigation.goBack()}
+          style={styles.close}
         >
-          <Text style={styles.buttonText}>Publier</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
+          <Ionicons name="close" size={22} color={theme.colors.textStrong} />
+        </Pressable>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{config.title}</Text>
+          <Text style={styles.subtitle}>{config.subtitle}</Text>
+        </View>
+        <View style={styles.headerBadge}>
+          <Ionicons name={config.icon} size={20} color={theme.colors.primary} />
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <Animated.View entering={FadeInDown.duration(240)} style={styles.card}>
+          <Text style={styles.cardTitle}>{config.prompt}</Text>
+          <TextInput
+            value={caption}
+            onChangeText={setCaption}
+            placeholder="Partagez une idée, un event, une story ou une ressource utile…"
+            placeholderTextColor={theme.colors.textMuted}
+            style={styles.input}
+            multiline
+          />
+          <View style={styles.toolRow}>
+            {config.tools.map((tool) => (
+              <Pressable
+                key={tool.key}
+                accessibilityRole="button"
+                accessibilityLabel={tool.label}
+                onPress={() => hapticFeedback.selection()}
+                style={({ pressed }) => [styles.toolChip, pressed && styles.pressed]}
+              >
+                <Ionicons name={tool.icon} size={18} color={theme.colors.primaryDeep} />
+                <Text style={styles.toolText}>{tool.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(80).duration(240)}>
+          <Text style={styles.previewLabel}>Aperçu</Text>
+          <LinearGradient
+            colors={theme.gradients.brand}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.previewVisual}
+          >
+            <View style={styles.previewTopRow}>
+              <Ionicons name={config.icon} size={16} color="rgba(255,255,255,0.85)" />
+              <Text style={styles.previewTop}>Afroza Creator Mode</Text>
+            </View>
+            <Text style={styles.previewCaption}>
+              {caption || 'Votre contenu apparaîtra ici avec une carte média premium prête à publier.'}
+            </Text>
+          </LinearGradient>
+        </Animated.View>
+
+        <View style={styles.actions}>
+          <AppButton label="Enregistrer le brouillon" variant="secondary" />
+          <AppButton
+            label={config.cta}
+            disabled={!caption.trim()}
+            onPress={() => {
+              hapticFeedback.strong();
+              navigation.goBack();
+            }}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  safeArea: {
     flex: 1,
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000',
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
     backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.radii.lg,
-    borderTopRightRadius: theme.radii.lg,
+  },
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.97 }],
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: theme.spacing.md,
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
   },
-  closeIcon: {
-    fontSize: 24,
-    color: theme.colors.text,
-    fontWeight: '600',
+  close: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+  },
+  headerBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: theme.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text,
+    ...theme.typography.title2,
+    color: theme.colors.textStrong,
   },
-  spacer: {
-    width: 24,
+  subtitle: {
+    ...theme.typography.bodyMuted,
+    color: theme.colors.textMuted,
+  },
+  content: {
+    padding: theme.spacing.lg,
+    gap: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxxl,
+  },
+  card: {
+    gap: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    ...theme.shadows.card,
+  },
+  cardTitle: {
+    ...theme.typography.title3,
+    color: theme.colors.textStrong,
   },
   input: {
-    minHeight: 120,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.surface,
+    minHeight: 140,
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceMuted,
     padding: theme.spacing.md,
+    color: theme.colors.textStrong,
     textAlignVertical: 'top',
-    fontSize: 16,
-    color: theme.colors.text,
-    marginTop: theme.spacing.md,
+    fontSize: 15,
   },
-  preview: {
-    marginTop: theme.spacing.md,
+  toolRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  toolChip: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    borderRadius: theme.radii.round,
+    backgroundColor: theme.colors.primarySoft,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
-  imagePlaceholder: {
-    width: '100%',
-    height: 200,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
+  toolText: {
+    ...theme.typography.label,
+    color: theme.colors.primaryDeep,
+  },
+  previewLabel: {
+    ...theme.typography.label,
+    color: theme.colors.textStrong,
+    marginBottom: theme.spacing.sm,
+  },
+  previewVisual: {
+    minHeight: 200,
+    borderRadius: theme.radii.lg,
+    padding: theme.spacing.lg,
+    justifyContent: 'space-between',
+  },
+  previewTopRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    borderStyle: 'dashed',
+    gap: 6,
   },
-  imagePlaceholderText: {
-    color: theme.colors.primary,
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  button: {
-    marginTop: theme.spacing.lg,
-    backgroundColor: theme.colors.primary,
-    padding: theme.spacing.md,
-    borderRadius: theme.radii.sm,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
+  previewTop: {
+    ...theme.typography.caption,
+    color: 'rgba(255,255,255,0.85)',
     fontWeight: '700',
-    fontSize: 16,
+  },
+  previewCaption: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+    color: theme.colors.white,
+  },
+  actions: {
+    gap: theme.spacing.md,
   },
 });

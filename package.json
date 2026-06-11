@@ -1,8 +1,5 @@
 {
   "name": "afroza-campus",
   "version": "0.1.0",
-  "private": true,
-  "workspaces": [
-    "frontend/mobile"
-  ]
+  "private": true
 }

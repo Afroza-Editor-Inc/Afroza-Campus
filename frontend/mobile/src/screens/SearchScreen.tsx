@@ -1,322 +1,268 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, TextInput, FlatList, Image, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppIcon, AppScreen, GlassCard, SectionTitle } from '../components/ui';
 import theme from '../theme';
-import { mockUsers, mockGroups, mockChannels, mockPosts } from '../data/mock';
+import { mockChannels, mockGroups, mockPosts, mockUsers } from '../data/mock';
 
-type SearchTab = 'users' | 'groups' | 'posts';
+type TabKey = 'discover' | 'people' | 'communities';
 
 export default function SearchScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<SearchTab>('users');
+  const [activeTab, setActiveTab] = useState<TabKey>('discover');
+  const [query, setQuery] = useState('');
 
-  // Filter results based on search query and active tab
-  const filteredResults = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-
-    switch (activeTab) {
-      case 'users':
-        return mockUsers.filter(
-          (user) =>
-            user.name.toLowerCase().includes(query) ||
-            user.username.toLowerCase().includes(query)
-        );
-
-      case 'groups':
-        return mockGroups.filter(
-          (group) =>
-            group.name.toLowerCase().includes(query) ||
-            group.description.toLowerCase().includes(query)
-        );
-
-      case 'posts':
-        return mockPosts.filter(
-          (post) =>
-            post.caption.toLowerCase().includes(query) ||
-            post.user.name.toLowerCase().includes(query)
-        );
-
-      default:
-        return [];
-    }
-  }, [searchQuery, activeTab]);
-
-  const results = filteredResults as any[];
-
-  const renderUserItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.resultItem}>
-      <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userBio}>{item.bio || '@' + item.username}</Text>
-      </View>
-      <TouchableOpacity style={styles.followButton}>
-        <Text style={styles.followButtonText}>+</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
+  const users = mockUsers.filter((user) => `${user.name} ${user.username}`.toLowerCase().includes(query.toLowerCase()));
+  const communities = [...mockGroups, ...mockChannels].filter((item) =>
+    `${item.name} ${item.description}`.toLowerCase().includes(query.toLowerCase()),
   );
-
-  const renderGroupItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.resultItem}>
-      <Image source={{ uri: item.avatar }} style={styles.groupAvatar} />
-      <View style={styles.groupInfo}>
-        <Text style={styles.groupName}>{item.name}</Text>
-        <Text style={styles.groupDesc}>{item.members} membres</Text>
-      </View>
-      <TouchableOpacity style={styles.joinButton}>
-        <Text style={styles.joinButtonText}>{item.isJoined ? '✓' : '+'}</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-
-  const renderPostItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.postItem}>
-      <Image source={{ uri: item.image }} style={styles.postImage} />
-      <View style={styles.postOverlay}>
-        <Text style={styles.postCaption} numberOfLines={2}>
-          {item.caption}
-        </Text>
-        <View style={styles.postStats}>
-          <Text style={styles.statText}>❤️ {item.likes}</Text>
-          <Text style={styles.statText}>💬 {item.comments}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const TabButton = ({ label, tab }: { label: string; tab: SearchTab }) => (
-    <TouchableOpacity
-      onPress={() => setActiveTab(tab)}
-      style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
-    >
-      <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+  const discover = mockPosts.filter((post) =>
+    `${post.caption} ${post.user.name}`.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Search Input */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher..."
-          placeholderTextColor={theme.colors.muted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery ? (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Text style={styles.clearIcon}>✕</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+    <AppScreen contentContainerStyle={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <SectionTitle eyebrow="Explorer" title="Recherche & découverte" />
+        <View style={styles.searchBar}>
+          <AppIcon name="search" size={18} color={theme.colors.primary} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Chercher des étudiants, clubs, canaux"
+            placeholderTextColor={theme.colors.textSoft}
+            style={styles.searchInput}
+          />
+        </View>
 
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        <TabButton label="Utilisateurs" tab="users" />
-        <TabButton label="Groupes" tab="groups" />
-        <TabButton label="Publications" tab="posts" />
-      </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trendingRow}>
+          {['Trending posts', 'Reels campus', 'Clubs design', 'Jobs & stages'].map((item) => (
+            <View key={item} style={styles.trendingChip}>
+              <Text style={styles.trendingChipText}>{item}</Text>
+            </View>
+          ))}
+        </ScrollView>
 
-      {/* Results */}
-      <FlatList
-        data={results}
-        keyExtractor={(item) => item.id}
-        renderItem={activeTab === 'posts' ? renderPostItem : activeTab === 'users' ? renderUserItem : renderGroupItem}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {searchQuery ? 'Aucun résultat trouvé' : 'Tapez pour rechercher'}
-            </Text>
+        <View style={styles.tabs}>
+          {[
+            { key: 'discover', label: 'Pour vous' },
+            { key: 'people', label: 'Étudiants' },
+            { key: 'communities', label: 'Communautés' },
+          ].map((tab) => (
+            <Pressable
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key as TabKey)}
+              style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {activeTab === 'discover' ? (
+          <View style={styles.discoveryGrid}>
+            {discover.slice(0, 6).map((post, index) => (
+              <GlassCard key={post.id} style={[styles.discoveryCard, index % 3 === 0 && styles.discoveryTall]}>
+                <Image source={{ uri: post.image }} style={styles.discoveryImage} />
+                <View style={styles.discoveryOverlay} />
+                <View style={styles.discoveryMeta}>
+                  <Text style={styles.discoveryName}>{post.user.name}</Text>
+                  <Text style={styles.discoveryCaption} numberOfLines={2}>
+                    {post.caption}
+                  </Text>
+                </View>
+              </GlassCard>
+            ))}
           </View>
-        }
-        contentContainerStyle={styles.listContent}
-        numColumns={activeTab === 'posts' ? 2 : 1}
-        columnWrapperStyle={activeTab === 'posts' ? styles.postColumnWrapper : undefined}
-      />
-    </SafeAreaView>
+        ) : null}
+
+        {activeTab === 'people' ? (
+          <View style={styles.list}>
+            {users.map((user) => (
+              <GlassCard key={user.id} style={styles.listCard}>
+                <Image source={{ uri: user.avatar }} style={styles.avatar} />
+                <View style={styles.listText}>
+                  <Text style={styles.listTitle}>{user.name}</Text>
+                  <Text style={styles.listSubtitle}>@{user.username} · {user.bio}</Text>
+                </View>
+                <View style={styles.followChip}>
+                  <Text style={styles.followChipText}>Suivre</Text>
+                </View>
+              </GlassCard>
+            ))}
+          </View>
+        ) : null}
+
+        {activeTab === 'communities' ? (
+          <View style={styles.list}>
+            {communities.map((item) => (
+              <GlassCard key={item.id} style={styles.listCard}>
+                <Image source={{ uri: item.avatar }} style={styles.communityAvatar} />
+                <View style={styles.listText}>
+                  <Text style={styles.listTitle}>{item.name}</Text>
+                  <Text style={styles.listSubtitle}>{item.description}</Text>
+                </View>
+                <View style={styles.joinChip}>
+                  <Text style={styles.joinChipText}>Rejoindre</Text>
+                </View>
+              </GlassCard>
+            ))}
+          </View>
+        ) : null}
+      </ScrollView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
+    paddingTop: theme.spacing.md,
   },
-  searchContainer: {
+  scrollContent: {
+    paddingBottom: 150,
+    gap: theme.spacing.lg,
+  },
+  searchBar: {
+    minHeight: 56,
+    borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.md,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    borderRadius: theme.radii.lg,
-    paddingHorizontal: theme.spacing.md,
-    height: 44,
-  },
-  searchIcon: {
-    fontSize: 18,
-    marginRight: theme.spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.text,
+    marginLeft: theme.spacing.sm,
   },
-  clearIcon: {
-    fontSize: 18,
-    color: theme.colors.muted,
+  trendingRow: {
+    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
   },
-  tabsContainer: {
-    flexDirection: 'row',
+  trendingChip: {
+    borderRadius: theme.radii.round,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     paddingHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-  },
-  tabButton: {
-    flex: 1,
     paddingVertical: theme.spacing.sm,
-    marginRight: theme.spacing.sm,
-    borderRadius: theme.radii.md,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
   },
-  tabButtonActive: {
-    backgroundColor: theme.colors.primary,
+  trendingChipText: {
+    ...theme.typography.label,
+    color: theme.colors.textMuted,
   },
-  tabButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.muted,
-  },
-  tabButtonTextActive: {
-    color: '#fff',
-  },
-  listContent: {
-    paddingHorizontal: theme.spacing.md,
-  },
-  resultItem: {
+  tabs: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surface,
+    gap: theme.spacing.sm,
   },
-  userAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-  },
-  userInfo: {
+  tab: {
     flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  userBio: {
-    fontSize: 12,
-    color: theme.colors.muted,
-  },
-  followButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.primary,
+    minHeight: 44,
+    borderRadius: theme.radii.round,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
-  followButtonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+  tabActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
-  groupAvatar: {
+  tabText: {
+    ...theme.typography.label,
+    color: theme.colors.textMuted,
+  },
+  tabTextActive: {
+    color: theme.colors.white,
+  },
+  discoveryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+  },
+  discoveryCard: {
+    width: '47%',
+    height: 170,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  discoveryTall: {
+    height: 240,
+  },
+  discoveryImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  discoveryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(9, 17, 31, 0.22)',
+  },
+  discoveryMeta: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 12,
+    gap: 2,
+  },
+  discoveryName: {
+    color: theme.colors.white,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  discoveryCaption: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  list: {
+    gap: theme.spacing.md,
+  },
+  listCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  avatar: {
     width: 56,
     height: 56,
-    borderRadius: 12,
-    marginRight: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 28,
   },
-  groupInfo: {
+  communityAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+  },
+  listText: {
     flex: 1,
+    gap: 4,
   },
-  groupName: {
+  listTitle: {
+    ...theme.typography.title3,
     fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 4,
   },
-  groupDesc: {
-    fontSize: 13,
-    color: theme.colors.muted,
+  listSubtitle: {
+    ...theme.typography.bodyMuted,
   },
-  joinButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: theme.radii.md,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  followChip: {
+    borderRadius: theme.radii.round,
+    backgroundColor: theme.colors.primarySoft,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
-  joinButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  followChipText: {
+    ...theme.typography.label,
+    color: theme.colors.primary,
   },
-  postItem: {
-    flex: 1,
-    marginHorizontal: 4,
-    marginBottom: 8,
-    borderRadius: theme.radii.md,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.surface,
+  joinChip: {
+    borderRadius: theme.radii.round,
+    backgroundColor: theme.colors.secondarySoft,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
-  postImage: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: theme.colors.muted,
-  },
-  postOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-    padding: theme.spacing.sm,
-  },
-  postCaption: {
-    fontSize: 11,
-    color: '#fff',
-    marginBottom: 8,
-  },
-  postStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statText: {
-    fontSize: 10,
-    color: '#fff',
-  },
-  postColumnWrapper: {
-    justifyContent: 'space-between',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 100,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: theme.colors.muted,
-    textAlign: 'center',
+  joinChipText: {
+    ...theme.typography.label,
+    color: theme.colors.secondaryDeep,
   },
 });

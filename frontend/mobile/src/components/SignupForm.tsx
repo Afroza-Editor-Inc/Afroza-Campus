@@ -1,7 +1,6 @@
-// frontend/mobile/src/components/SignupForm.tsx
-
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppButton, AppInput, GlassCard } from './ui';
 import theme from '../theme';
 
 interface Props {
@@ -9,136 +8,111 @@ interface Props {
 }
 
 export default function SignupForm({ onSuccess }: Props) {
+  const [step, setStep] = useState<'details' | 'otp'>('details');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+  const handleContinue = () => {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
+      Alert.alert('Informations manquantes', 'Complétez votre profil de base pour recevoir votre code OTP.');
       return;
     }
+    setStep('otp');
+  };
 
-    if (password !== confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+  const handleSignup = () => {
+    if (otp.trim().length < 4) {
+      Alert.alert('Code OTP invalide', 'Entrez le code reçu par SMS ou email pour activer le compte.');
       return;
     }
 
     setLoading(true);
-    // Simuler API call
     setTimeout(() => {
       setLoading(false);
       onSuccess();
-    }, 1000);
+    }, 800);
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Nom complet</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Votre nom complet"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="votre@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Téléphone</Text>
-        <TextInput
-          style={styles.input}
-          value={phone}
-          onChangeText={setPhone}
-          placeholder="+225 XX XX XX XX"
-          keyboardType="phone-pad"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Mot de passe</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Votre mot de passe"
-          secureTextEntry
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Confirmer le mot de passe</Text>
-        <TextInput
-          style={styles.input}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Confirmer votre mot de passe"
-          secureTextEntry
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSignup}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Inscription...' : "S'inscrire"}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+    <GlassCard style={styles.card}>
+      {step === 'details' ? (
+        <View style={styles.fields}>
+          <AppInput label="Nom complet" value={name} onChangeText={setName} placeholder="Fatima Hassan" />
+          <AppInput
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="fatima@campus.afroza"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <AppInput
+            label="Téléphone"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="+237 6 90 00 00 00"
+            keyboardType="phone-pad"
+          />
+          <AppInput
+            label="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Créez un mot de passe"
+            secureTextEntry
+            hint="Minimum 8 caractères. Le profil sera activé via OTP."
+          />
+          <AppButton label="Recevoir le code OTP" onPress={handleContinue} />
+        </View>
+      ) : (
+        <View style={styles.fields}>
+          <View style={styles.otpHeader}>
+            <Text style={styles.otpTitle}>Validation du compte</Text>
+            <Text style={styles.otpText}>
+              Un code a été envoyé à {phone || email}. Activez votre compte pour accéder aux groupes,
+              messages et publications.
+            </Text>
+          </View>
+          <AppInput
+            label="Code OTP"
+            value={otp}
+            onChangeText={setOtp}
+            placeholder="2481"
+            keyboardType="number-pad"
+            hint="Simulation frontend prête pour l’intégration backend."
+          />
+          <AppButton label={loading ? 'Activation...' : 'Activer mon compte'} onPress={handleSignup} disabled={loading} />
+          <Pressable onPress={() => setStep('details')}>
+            <Text style={styles.backLink}>Modifier les informations</Text>
+          </Pressable>
+        </View>
+      )}
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  card: {
+    gap: theme.spacing.lg,
   },
-  inputContainer: {
-    marginBottom: theme.spacing.lg,
+  fields: {
+    gap: theme.spacing.md,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
+  otpHeader: {
+    gap: theme.spacing.xs,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.colors.muted,
-    borderRadius: theme.radii.md,
-    padding: theme.spacing.md,
-    fontSize: 16,
-    backgroundColor: theme.colors.surface,
+  otpTitle: {
+    ...theme.typography.title3,
   },
-  button: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.radii.md,
-    alignItems: 'center',
-    marginTop: theme.spacing.md,
+  otpText: {
+    ...theme.typography.bodyMuted,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: theme.colors.background,
-    fontSize: 16,
-    fontWeight: 'bold',
+  backLink: {
+    ...theme.typography.label,
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
 });

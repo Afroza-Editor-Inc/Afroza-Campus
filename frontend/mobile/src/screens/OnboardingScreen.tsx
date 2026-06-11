@@ -1,94 +1,95 @@
-// frontend/mobile/src/screens/OnboardingScreen.tsx
-
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Dimensions, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../components/ui';
 import theme from '../theme';
 
 const { width } = Dimensions.get('window');
 
 const slides = [
   {
-    id: 1,
-    title: 'Bienvenue sur Afroza Campus',
-    description: 'Le réseau social qui connecte les étudiants africains du monde entier.',
-    image: require('../assets/onboarding1.png'), // Placeholder
+    id: '1',
+    title: 'Restez connectés\nà tout votre campus',
+    description:
+      'Messagerie, groupes, canaux et appels réunis : communiquez avec vos camarades et vos communautés sans friction.',
+    image: require('../assets/onboarding1.png'),
   },
   {
-    id: 2,
-    title: 'Découvrez et Connectez',
-    description: 'Rencontrez des étudiants, rejoignez des clubs et participez à des événements.',
-    image: require('../assets/onboarding2.png'), // Placeholder
+    id: '2',
+    title: 'Communautés, projets\net entraide étudiante',
+    description:
+      'Rejoignez vos facultés et clubs, collaborez sur des projets, partagez ressources et tâches comme une vraie équipe.',
+    image: require('../assets/onboarding2.png'),
   },
   {
-    id: 3,
-    title: 'Partagez et Collaborez',
-    description: 'Publiez vos idées, discutez et travaillez ensemble sur des projets.',
-    image: require('../assets/onboarding3.png'), // Placeholder
+    id: '3',
+    title: 'Créez, publiez\net faites grandir vos idées',
+    description:
+      'Stories, reels et publications : une expérience sociale premium pensée pour les créateurs et leaders de communauté.',
+    image: require('../assets/onboarding3.png'),
   },
 ];
 
 export default function OnboardingScreen({ navigation }: any) {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [index, setIndex] = useState(0);
+  const listRef = useRef<FlatList<(typeof slides)[number]>>(null);
+  const isLast = index === slides.length - 1;
 
-  const handleNext = () => {
-    if (currentSlide < slides.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    } else {
-      navigation.replace('Auth');
+  const goToWelcome = () => navigation.replace('Welcome');
+
+  const next = () => {
+    if (isLast) {
+      goToWelcome();
+      return;
     }
-  };
-
-  const handleSkip = () => {
-    navigation.replace('Auth');
+    listRef.current?.scrollToIndex({ index: index + 1, animated: true });
+    setIndex(index + 1);
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <View style={styles.topBar}>
+        <Pressable hitSlop={theme.accessibility.hitSlop} onPress={goToWelcome}>
+          <Text style={styles.skipTop}>Passer</Text>
+        </Pressable>
+      </View>
+
+      <FlatList
+        ref={listRef}
         horizontal
         pagingEnabled
+        data={slides}
+        keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
-        onScroll={(event) => {
-          const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-          setCurrentSlide(slideIndex);
+        onMomentumScrollEnd={(event) => {
+          setIndex(Math.round(event.nativeEvent.contentOffset.x / width));
         }}
-        scrollEventThrottle={16}
-      >
-        {slides.map((slide) => (
-          <View key={slide.id} style={styles.slide}>
-            <Image source={slide.image} style={styles.image} />
-            <Text style={styles.title}>{slide.title}</Text>
-            <Text style={styles.description}>{slide.description}</Text>
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <View style={styles.illustrationWrap}>
+              <View style={styles.illustrationGlow} />
+              <Image source={item.image} resizeMode="contain" style={styles.image} />
+            </View>
           </View>
-        ))}
-      </ScrollView>
+        )}
+      />
 
-      <View style={styles.footer}>
-        <View style={styles.indicators}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.indicator,
-                currentSlide === index && styles.activeIndicator,
-              ]}
-            />
+      <View style={styles.card}>
+        <Text style={styles.title}>{slides[index].title}</Text>
+        <Text style={styles.description}>{slides[index].description}</Text>
+
+        <View style={styles.pagination}>
+          {slides.map((slide, slideIndex) => (
+            <View key={slide.id} style={[styles.dot, index === slideIndex && styles.dotActive]} />
           ))}
         </View>
 
-        <View style={styles.buttons}>
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Passer</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-            <Text style={styles.nextText}>
-              {currentSlide === slides.length - 1 ? 'Commencer' : 'Suivant'}
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.actions}>
+          <AppButton label={isLast ? 'Commencer' : 'Suivant'} onPress={next} />
+          {!isLast ? <AppButton label="Passer" onPress={goToWelcome} variant="ghost" /> : null}
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -97,72 +98,77 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  topBar: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    alignItems: 'flex-end',
+  },
+  skipTop: {
+    ...theme.typography.label,
+    color: theme.colors.textMuted,
+  },
   slide: {
     width,
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
+  },
+  illustrationWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    maxHeight: 360,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  illustrationGlow: {
+    position: 'absolute',
+    width: '78%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    backgroundColor: theme.colors.surfaceMuted,
   },
   image: {
-    width: 250,
-    height: 250,
-    marginBottom: theme.spacing.xl,
+    width: '92%',
+    height: '92%',
+  },
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: theme.radii.xl,
+    borderTopRightRadius: theme.radii.xl,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl,
+    gap: theme.spacing.md,
+    ...theme.shadows.card,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.text,
+    ...theme.typography.title1,
     textAlign: 'center',
-    marginBottom: theme.spacing.md,
   },
   description: {
-    fontSize: 16,
-    color: theme.colors.muted,
+    ...theme.typography.bodyMuted,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: 'center',
-    lineHeight: 24,
   },
-  footer: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl,
-  },
-  indicators: {
+  pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
   },
-  indicator: {
+  dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.colors.muted,
-    marginHorizontal: 4,
+    backgroundColor: theme.colors.borderStrong,
   },
-  activeIndicator: {
+  dotActive: {
+    width: 28,
     backgroundColor: theme.colors.primary,
-    width: 24,
   },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  skipButton: {
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  skipText: {
-    color: theme.colors.muted,
-    fontSize: 16,
-  },
-  nextButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radii.md,
-  },
-  nextText: {
-    color: theme.colors.background,
-    fontSize: 16,
-    fontWeight: 'bold',
+  actions: {
+    gap: theme.spacing.sm,
   },
 });

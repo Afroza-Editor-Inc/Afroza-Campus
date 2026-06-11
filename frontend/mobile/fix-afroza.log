@@ -1,0 +1,31 @@
+=== AFROZA MOBILE FIX LOG ===
+Started: lun. 20 avril 2026 13:12:40 WAT
+Project: /home/karel/Documents/Afroza_Campus/afroza-campus/frontend/mobile
+
+[0;34m[LOG][0m ÉTAPE 1/7: PRÉPARATION
+[1;33m⚠️  Node.js v24 détecté (v24+ peut avoir des bugs)[0m
+[1;33m⚠️  Considérez downgrade vers Node LTS (v20 ou v22)[0m
+[0;32m✅ Node version: v24.13.1[0m
+[0;32m✅ npm version: 11.8.0[0m
+[0;34m[LOG][0m ÉTAPE 2/7: NETTOYAGE COMPLET (peut prendre 2-3 min)
+[0;34m[LOG][0m Arrêt d'Expo en cours...
+[0;34m[LOG][0m Suppression de node_modules...
+[0;34m[LOG][0m Suppression de package-lock.json...
+[0;34m[LOG][0m Suppression du cache .expo...
+[0;34m[LOG][0m Nettoyage npm cache...
+npm warn using --force Recommended protections disabled.
+[0;34m[LOG][0m Nettoyage Metro cache...
+[0;32m✅ ÉTAPE 2 COMPLÈTE: Nettoyage total[0m
+[0;34m[LOG][0m ÉTAPE 3/7: CORRECTION DU CODE
+[0;34m[LOG][0m Sauvegarde package.json original...
+[0;34m[LOG][0m Application du package.json SDK 54...
+[0;32m✅ package.json mis à jour[0m
+[0;32m✅ ÉTAPE 3 COMPLÈTE: Corrections appliquées[0m
+[0;34m[LOG][0m ÉTAPE 4/7: RÉINSTALLATION (peut prendre 8-15 min)
+[0;34m[LOG][0m npm install en cours...
+npm error code ETARGET
+npm error notarget No matching version found for expo-constants@~54.0.0.
+npm error notarget In most cases you or one of your dependencies are requesting
+npm error notarget a package version that doesn't exist.
+npm error A complete log of this run can be found in: /home/karel/.npm/_logs/2026-04-20T12_12_43_690Z-debug-0.log
+[0;31m❌ npm install échoué[0m
